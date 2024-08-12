@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Home</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="fun.js"></script>
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2640/2640538.png" type="image/x-icon">
+</head>
+<body style="background-color: #E1F0DA;">  
+  <h1 class="h1 mt-5 text-center">Tanya Data</h1>
+  <div class="mx-5 my-2 p-2" >
+    <label class="form-label" for="picker">Pilih file CSV</label>
+    <input class="form-control" type="file" accept=".csv" id="picker" onchange="demo()">
+    <div class="overflow-auto mt-2 mb-3 tabel">
+      <table id="demo" class="table table-bordered table-responsive table-striped table-hover"></table>
+    </div>
+
+    <label class="form-label" for="tanya">Mau tanya apa?</label>
+    <textarea class="form-control" id="tanya"></textarea>
+    <div class="justify-content-center d-flex">
+      <button class="btn btn-primary mt-3" onclick="tanya()">Tanyakan</button>
+      <button class="btn btn-danger mt-3 ms-2" onclick="resetTanya()">Reset Pertanyaan</button>
+    </div>
+  </div>
+  
+  <script>
+    var site_url = "http://localhost:8080/";
+    function demo() {
+    Papa.parse(document.getElementById("picker").files[0], {
+      skipEmptyLines: true,
+  
+      complete : csv => {
+        var table = document.getElementById("demo");
+            table.innerHTML = "";
+  
+        var thead = table.createTHead();
+        var row = thead.insertRow();
+        for (let cell of csv.data[0]) {
+            let td=row.insertCell();
+            td.innerHTML = cell;
+        }
+  
+        var tbody = table.createTBody();
+        for (let i = 1; i < csv.data.length; i++) {
+          let row = csv.data[i];
+            tr=tbody.insertRow();
+            for (let cell of row) {
+                let td=tr.insertCell();
+                td.innerHTML = cell;
+            }
+        }
+        document.querySelector(".tabel").style.height = "300px";
+      }
+    });
+  }
+  
+  function tanya() {
+    var fileInput = document.getElementById('picker').files[0];
+    var tanyaValue = document.getElementById('tanya').value;
+    var jawab = document.getElementById('answer');
+
+    let fr = new FileReader();
+    fr.onload = receivedText;
+    fr.readAsText(fileInput);
+
+    function receivedText() {
+      let input = fr.result
+      console.log(input, tanyaValue)
+      $.ajax({
+      url: site_url + "jawab",
+      type: "POST",
+      data: JSON.stringify({
+        "ask": tanyaValue,
+        "csv": input,
+      }),
+      contentType: "application/json",
+      success: function(response) {
+        console.log("Response:", response);
+        window.alert(response.answer)
+      },
+      error: function(xhr, status, error) {
+        console.error("Error:", error);
+      }
+    });
+    }
+  }
+  function resetTanya() {
+    document.getElementById('tanya').value = ''; 
+  }
+  </script>
+</body>
+</html>
